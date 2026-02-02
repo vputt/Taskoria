@@ -1,0 +1,30 @@
+# FastAPI и связанные
+fastapi>=0.115.0  # Совместимость с pydantic 2.12+ и Python 3.14
+uvicorn[standard]==0.27.0
+pydantic[email]>=2.12.0  # Поддержка Python 3.14 с валидацией email (включает email-validator)
+pydantic-settings>=2.6.0  # Совместимость с pydantic 2.12+
+python-multipart==0.0.6
+
+# База данных
+sqlalchemy>=2.0.44  # Поддержка Python 3.14
+psycopg2-binary>=2.9.11  # Поддержка Python 3.14
+alembic>=1.14.0  # Совместимость с SQLAlchemy 2.0.44+
+
+# Аутентификация
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+
+# AI Integration
+# Используем REST API через httpx, библиотека gigachat не требуется
+httpx==0.26.0
+
+# Кэширование (опционально)
+redis==5.0.1
+
+# Тестирование
+pytest==7.4.4
+pytest-asyncio==0.23.3
+
+# Утилиты
+python-dateutil==2.8.2
