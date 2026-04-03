@@ -36,8 +36,10 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     category: Optional[TaskCategory] = None
     priority: Optional[TaskPriority] = None
+    difficulty: Optional[TaskDifficulty] = None
     status: Optional[TaskStatus] = None
     deadline: Optional[datetime] = None
+    clear_deadline: bool = False
 
 
 class TaskResponse(TaskBase):

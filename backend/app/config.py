@@ -6,8 +6,10 @@
 предотвращает множественное чтение .env файла и обеспечивает 
 глобальный доступ к конфигурации.
 """
-from pydantic_settings import BaseSettings
 from typing import Optional
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -43,10 +45,33 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     API_V1_STR: str = "/api"
     PROJECT_NAME: str = "Taskoria API"
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+    )
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def normalize_debug(cls, value: bool | str) -> bool | str:
+        """
+        Принимает типовые строковые режимы окружения.
+        Это делает конфиг устойчивее к значениям вроде DEBUG=release.
+        """
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            truthy_values = {"1", "true", "yes", "on", "debug", "dev", "development"}
+            falsy_values = {"0", "false", "no", "off", "release", "prod", "production"}
+
+            if normalized in truthy_values:
+                return True
+            if normalized in falsy_values:
+                return False
+
+        return value
 
 
 # Singleton instance - единственный экземпляр настроек

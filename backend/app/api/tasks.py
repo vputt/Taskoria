@@ -13,7 +13,7 @@ from app.schemas.task import (
     TaskCompleteResponse
 )
 from app.schemas.subtask import SubtaskResponse
-from app.services.task_service import TaskService
+from app.services.task_service import TaskService, TaskSplitConflictError
 from app.api.deps import get_current_user, get_task_service
 
 router = APIRouter()
@@ -247,6 +247,7 @@ def complete_task(
 @router.post("/{task_id}/split", response_model=List[SubtaskResponse])
 async def split_task(
     task_id: int,
+    replace_existing: bool = False,
     current_user: User = Depends(get_current_user),
     task_service: TaskService = Depends(get_task_service)
 ):
@@ -273,8 +274,16 @@ async def split_task(
                 detail="Not authorized to modify this task"
             )
         
-        subtasks = await task_service.split_task_with_ai(task_id)
+        subtasks = await task_service.split_task_with_ai(
+            task_id,
+            replace_existing=replace_existing
+        )
         return subtasks
+    except TaskSplitConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

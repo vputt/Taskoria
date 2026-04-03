@@ -39,6 +39,7 @@ class User(Base):
     tasks = relationship("Task", back_populates="user", lazy="select")
     achievements = relationship("UserAchievement", back_populates="user", lazy="select")
     buildings = relationship("Building", back_populates="user", lazy="select")
+    shop_items = relationship("UserShopItem", back_populates="user", lazy="select")
     statistics = relationship("Statistics", back_populates="user", lazy="select")
     
     def add_xp(self, amount: int) -> bool:

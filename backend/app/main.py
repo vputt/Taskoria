@@ -10,6 +10,7 @@ import logging
 
 from app.config import settings
 from app.api import api_router
+from app.core.observers import register_event_observers
 from app.database import init_db
 
 # Настройка логирования
@@ -52,6 +53,7 @@ async def startup_event():
     # Инициализация БД (создание таблиц если их нет)
     try:
         init_db()
+        register_event_observers()
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
