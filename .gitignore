@@ -1,0 +1,87 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+**/build/
+**/coverage/
+
+# Android / Gradle local artifacts
+**/.gradle/
+**/.kotlin/
+**/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs and local databases
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Local templates, examples, report drafts, and old working notes
+temp/
+docs/
+BACKEND_CHANGES_SUMMARY.md
+BACKEND_SPLIT_AND_CITY_PROGRESS.md
+CURRENT_PROJECT_CONTEXT.md
+PATTERNS_IMPLEMENTATION.md
+PROGRESS.md
+PROJECT_IMPLEMENTATION_STATUS.md
+TESTING_GUIDE.md
+taskoria_corrected_summary.md
+tz_front.md
+
+# Keep final project entrypoints
+!README.md
+!backend/
+!backend/**
+!productivity_city/
+!productivity_city/**
+
+# Frontend target platform for this project is Android.
+# Other Flutter platforms can be regenerated with `flutter create .` if needed.
+productivity_city/ios/
+productivity_city/linux/
+productivity_city/macos/
+productivity_city/web/
+productivity_city/windows/
+
+# Local frontend working notes and generated DevTools settings
+productivity_city/FRONTEND_CHANGELOG.md
+productivity_city/devtools_options.yaml

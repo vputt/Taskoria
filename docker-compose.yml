@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: taskoria_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: taskoria_db
+      POSTGRES_USER: taskoria_user
+      POSTGRES_PASSWORD: taskoria_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - taskoria_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskoria_user -d taskoria_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: taskoria_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://taskoria_user:taskoria_password@db:5432/taskoria_db
+      SECRET_KEY: docker-local-secret-change-me
+      DEBUG: "false"
+      API_V1_STR: /api
+      PROJECT_NAME: Taskoria API
+      GIGACHAT_AUTHORIZATION_KEY: ""
+      GIGACHAT_API_URL: https://gigachat.devices.sberbank.ru/api/v1
+      GIGACHAT_OAUTH_URL: https://ngw.devices.sberbank.ru:9443/api/v2/oauth
+      GIGACHAT_SCOPE: GIGACHAT_API_PERS
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  taskoria_postgres_data:

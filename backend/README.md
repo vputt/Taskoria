@@ -1,169 +1,200 @@
-# Taskoria — серверная часть (Backend)
+# Taskoria: серверная часть
 
-**Taskoria** (Геймифицированное мобильное приложение для управления задачами и визуализации прогресса / Gamified Mobile Application for Task Management and Progress Visualization) — курсовой проект. Данный репозиторий содержит серверную часть приложения: REST API на FastAPI и бизнес-логику.
+Серверная часть проекта Taskoria предоставляет REST API для аутентификации, управления задачами и подзадачами, начисления XP и Coins, ведения streak-системы, прогресса виртуального города, данных профиля и магазина.
 
 ## Назначение
 
 Backend обеспечивает:
 
-- Регистрацию и аутентификацию пользователей (JWT).
-- CRUD-операции с задачами и подзадачами.
-- Автоматическое разбиение задачи на подзадачи и оценку наград с помощью ИИ (интеграция с GigaChat API).
-- Завершение задач с начислением XP и монет, обновлением уровня и streak.
-- Профиль пользователя с игровыми метриками (уровень, XP, Coins, streak, счётчики достижений и зданий).
+- регистрацию и аутентификацию пользователей через JWT;
+- CRUD-операции для задач и подзадач;
+- автоматическое разбиение задач на подзадачи через GigaChat API;
+- начисление XP и Coins за выполнение задач;
+- обновление уровня пользователя и streak-системы;
+- хранение прогресса виртуального города и уровней зданий;
+- работу магазина декоративных объектов;
+- предоставление данных профиля, достижений и статистики;
+- автоматическую документацию API через Swagger.
 
 ## Технологический стек
 
-| Компонент | Технология |
-|-----------|------------|
-| Язык | Python 3.11+ |
-| Фреймворк | FastAPI |
-| СУБД | PostgreSQL 15+ |
-| ORM | SQLAlchemy |
-| Миграции | Alembic |
-| Валидация | Pydantic |
-| Сервер | Uvicorn (ASGI) |
+- Python 3.11
+- FastAPI
+- PostgreSQL 15
+- SQLAlchemy
+- Alembic
+- Pydantic
+- GigaChat API
 
-## Требования к окружению
+## Дополнительные инструменты
 
-- Python 3.11 или выше.
-- PostgreSQL 15 или выше.
-- Переменные окружения (см. раздел «Настройка»).
+- JWT - механизм аутентификации API.
+- Pytest - тестирование серверной части.
+- Swagger/OpenAPI - автоматическая документация API.
+- Docker Compose - локальный запуск backend и PostgreSQL.
+- Pytest
 
-## Установка и запуск
+## Структура
 
-### 1. Клонирование и переход в каталог
+```text
+backend/
+|-- app/
+|   |-- api/            # роутеры FastAPI
+|   |-- models/         # модели SQLAlchemy
+|   |-- schemas/        # схемы Pydantic
+|   |-- repositories/   # слой доступа к данным
+|   |-- services/       # бизнес-логика
+|   |-- factories/      # логика создания зданий
+|   |-- builders/       # вспомогательная сборка города
+|   |-- strategies/     # стратегии AI-провайдера
+|   `-- main.py         # FastAPI-приложение
+|-- alembic/            # миграции базы данных
+|-- tests/              # тесты Pytest
+|-- requirements.txt
+`-- .env.example
+```
 
-```bash
+## Установка
+
+```powershell
 cd backend
-```
-
-### 2. Виртуальное окружение и зависимости
-
-```bash
 python -m venv venv
-venv\Scripts\activate   # Windows
-# source venv/bin/activate  # Linux / macOS
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+copy .env.example .env
 ```
 
-### 3. База данных
+Перед запуском нужно отредактировать `.env` под локальное окружение.
 
-Создайте базу данных в PostgreSQL, например:
+## Переменные окружения
 
-```bash
-createdb taskoria_db
-```
+Безопасные примеры значений находятся в `.env.example`.
 
-Либо через `psql`:
+Основные переменные:
 
-```sql
-CREATE DATABASE taskoria_db;
-```
+- `DATABASE_URL` - строка подключения SQLAlchemy к базе данных.
+- `SECRET_KEY` - секрет для подписи JWT.
+- `ACCESS_TOKEN_EXPIRE_MINUTES` - время жизни access token.
+- `DEBUG` - режим разработки и отладки.
+- `GIGACHAT_AUTHORIZATION_KEY` - ключ для интеграции с GigaChat API.
+- `GIGACHAT_API_URL` - адрес GigaChat API.
+- `GIGACHAT_OAUTH_URL` - адрес GigaChat OAuth.
+- `GIGACHAT_SCOPE` - scope GigaChat.
+- `REDIS_URL` - адрес Redis, если используется cache.
 
-### 4. Настройка переменных окружения
+## База данных
 
-Создайте файл `.env` в корне папки `backend` (файл `.env` не должен попадать в репозиторий). Пример структуры:
+Применить миграции:
 
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/taskoria_db
-SECRET_KEY=your-secret-key-change-in-production
-GIGACHAT_AUTHORIZATION_KEY=your-api-authorization-key
-```
-
-При необходимости укажите дополнительные параметры (URL API, OAuth и т.д.) в соответствии с конфигурацией в `app/config.py`.
-
-### 5. Миграции
-
-```bash
+```powershell
 alembic upgrade head
 ```
 
-### 6. Начальные данные (опционально)
+Создать новую миграцию после изменения моделей:
 
-Загрузка предопределённых достижений:
-
-```bash
-python -m app.utils.seed_data
+```powershell
+alembic revision --autogenerate -m "message"
 ```
 
-### 7. Запуск сервера
+## Запуск
 
-```bash
-python -m app.main
+```powershell
+python -m uvicorn app.main:app --reload
 ```
 
-Либо через Uvicorn:
+Адрес по умолчанию:
 
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```text
+http://127.0.0.1:8000
 ```
 
-После запуска:
+Swagger UI:
 
-- API: <http://localhost:8000>
-- Документация Swagger: <http://localhost:8000/api/docs>
-- ReDoc: <http://localhost:8000/api/redoc>
-- Проверка состояния: <http://localhost:8000/health>
-
-## Структура проекта
-
-```
-backend/
-├── app/
-│   ├── api/              # Эндпоинты HTTP (auth, tasks, users, subtasks)
-│   ├── core/             # Ядро (контейнер зависимостей, шина событий)
-│   ├── models/           # Модели SQLAlchemy (User, Task, Subtask, Achievement, Building, Statistics)
-│   ├── schemas/          # Схемы Pydantic для запросов и ответов
-│   ├── repositories/     # Слой доступа к данным (Repository Pattern)
-│   ├── services/        # Бизнес-логика (задачи, награды, аутентификация, ИИ-сервис)
-│   ├── strategies/     # ИИ-стратегии: разбиение задач, оценка сложности и наград (Strategy Pattern)
-│   ├── templates/       # Шаблоны расчёта наград (Template Method)
-│   ├── states/          # Управление состоянием streak (State Pattern)
-│   ├── factories/       # Создание зданий (Factory Pattern)
-│   ├── builders/        # Построение города (Builder Pattern)
-│   ├── utils/           # Утилиты (клиент внешнего API, начальные данные)
-│   ├── config.py        # Конфигурация приложения
-│   ├── database.py      # Подключение к БД
-│   └── main.py          # Точка входа FastAPI
-├── alembic/             # Миграции БД
-├── requirements.txt
-├── .gitignore
-└── README.md
+```text
+http://127.0.0.1:8000/api/docs
 ```
 
-## API (кратко)
+Health check:
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| POST | /api/auth/register | Регистрация |
-| POST | /api/auth/login | Вход (JWT) |
-| GET | /api/tasks | Список задач (с пагинацией: skip, limit) |
-| POST | /api/tasks | Создание задачи |
-| GET | /api/tasks/{id} | Задача с подзадачами |
-| PATCH | /api/tasks/{id} | Обновление задачи |
-| DELETE | /api/tasks/{id} | Удаление задачи |
-| POST | /api/tasks/{id}/complete | Завершение задачи (награды, streak) |
-| POST | /api/tasks/{id}/split | Разбиение задачи на подзадачи с помощью ИИ |
-| GET | /api/tasks/{id}/subtasks | Список подзадач |
-| POST | /api/tasks/{id}/subtasks | Создание подзадачи |
-| PATCH | /api/tasks/{id}/subtasks/{sid} | Обновление подзадачи |
-| DELETE | /api/tasks/{id}/subtasks/{sid} | Удаление подзадачи |
-| POST | /api/tasks/{id}/subtasks/{sid}/complete | Завершение подзадачи |
-| POST | /api/tasks/{id}/subtasks/{sid}/start | Начало выполнения подзадачи |
-| GET | /api/users/me | Профиль текущего пользователя |
-| GET | /health | Проверка состояния сервера |
+```text
+GET /health
+```
 
-## Паттерны проектирования (используемые в проекте)
+## Запуск через Docker
 
-- **Singleton** — конфигурация, подключение к БД, шина событий.
-- **Dependency Injection** — внедрение зависимостей через FastAPI Depends.
-- **Repository** — абстракция доступа к данным.
-- **Strategy** — выбор ИИ-провайдера (разбиение задач, оценка сложности и наград; например, GigaChat).
-- **Template Method** — расчёт наград с переопределяемыми шагами.
-- **State** — управление состоянием streak.
-- **Observer** — шина событий (достижения, уровни).
-- **Factory** — создание зданий разных типов.
-- **Builder** — построение сложного объекта города.
-- **Facade** — упрощение сложных операций (завершение задачи, вызов сервиса разбиения).
-- **DDD** — доменные сущности и агрегаты (Task как Aggregate Root с подзадачами).
+Из корня проекта:
+
+```powershell
+docker compose up --build
+```
+
+Перед запуском должен быть открыт Docker Desktop. Ошибка про `dockerDesktopLinuxEngine` означает, что Docker Desktop или Linux engine не запущен.
+
+Команда поднимает два контейнера:
+
+- `taskoria_db` - PostgreSQL;
+- `taskoria_backend` - FastAPI API.
+
+После запуска доступны:
+
+```text
+http://127.0.0.1:8000/health
+http://127.0.0.1:8000/api/docs
+```
+
+Для Android-эмулятора указывайте `API_BASE_URL=http://10.0.2.2:8000`.
+
+Для физического телефона используйте один из вариантов:
+
+- телефон и компьютер в одной Wi-Fi сети: `API_BASE_URL=http://<PC_LOCAL_IP>:8000`;
+- телефон подключен по USB: сначала `adb reverse tcp:8000 tcp:8000`, затем `API_BASE_URL=http://127.0.0.1:8000`.
+
+## Основные API
+
+Аутентификация:
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+Пользователь:
+
+- `GET /api/users/me`
+
+Задачи:
+
+- `GET /api/tasks`
+- `POST /api/tasks`
+- `GET /api/tasks/{task_id}`
+- `PATCH /api/tasks/{task_id}`
+- `DELETE /api/tasks/{task_id}`
+- `POST /api/tasks/{task_id}/complete`
+- `POST /api/tasks/{task_id}/split`
+
+Подзадачи:
+
+- `GET /api/tasks/{task_id}/subtasks`
+- `POST /api/tasks/{task_id}/subtasks`
+- `PATCH /api/tasks/{task_id}/subtasks/{subtask_id}`
+- `POST /api/tasks/{task_id}/subtasks/{subtask_id}/start`
+- `POST /api/tasks/{task_id}/subtasks/{subtask_id}/complete`
+- `DELETE /api/tasks/{task_id}/subtasks/{subtask_id}`
+
+Город:
+
+- `GET /api/city`
+- `POST /api/city/buildings`
+- `PATCH /api/city/buildings/{building_id}/upgrade`
+
+Магазин:
+
+- `GET /api/shop`
+- `POST /api/shop/items/{item_id}/purchase`
+- `PATCH /api/shop/items/{item_id}/placement`
+
+## Тесты
+
+```powershell
+pytest
+```
+
+Текущие тесты покрывают завершение задач, разбиение задач на подзадачи и логику прогресса города.
