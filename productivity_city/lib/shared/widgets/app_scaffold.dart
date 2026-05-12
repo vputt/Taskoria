@@ -94,6 +94,7 @@ class AppScaffold extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
+              key: const ValueKey<String>('create-task-fab'),
               borderRadius: AppRadius.card,
               onTap: () => context.push('/tasks/create'),
               child: SizedBox(
