@@ -168,15 +168,3 @@ q
 flutter analyze
 flutter test
 ```
-
-## Ресурсы
-
-Ресурсы объявлены в `pubspec.yaml`:
-
-- `assets/buildings/`
-- `assets/characters/`
-- `assets/decorations/`
-- `assets/city/`
-- `assets/illustrations/`
-- `assets/icons/`
-- `assets/ui/`
