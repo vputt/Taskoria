@@ -19,7 +19,7 @@ func TestTaskStart_ActiveTask(t *testing.T) {
 		t.Fatalf("expected status %q, got %q", TaskStatusInProgress, task.Status)
 	}
 	if task.UpdatedAt.Equal(oldUpdatedAt) {
-		t.Fatal("expected update at to be change")
+		t.Fatal("expected updated at to change")
 	}
 }
 
@@ -55,7 +55,7 @@ func TestTaskStart_NonActiveTask(t *testing.T) {
 				t.Fatalf("expected status %q, got %q", tt.status, task.Status)
 			}
 			if !task.UpdatedAt.Equal(oldUpdatedAt) {
-				t.Fatal("expected update at not to be change")
+				t.Fatal("expected updated at not to change")
 			}
 		})
 	}
@@ -75,7 +75,7 @@ func TestTaskCancel(t *testing.T) {
 			status: TaskStatusInProgress,
 		},
 		{
-			name:   "complete -> cancelled",
+			name:   "completed -> cancelled",
 			status: TaskStatusCompleted,
 		},
 	}
