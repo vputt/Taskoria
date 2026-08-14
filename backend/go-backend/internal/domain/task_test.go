@@ -1,9 +1,135 @@
 package domain
 
-// TODO(student): напиши unit-тесты на доменное поведение Task.
-//
-// Начни с проверок:
-// - active-задачу можно перевести в работу
-// - non-active-задача не меняется после Start
-// - Complete меняет статус на completed и заполняет время завершения
-// - Cancel меняет статус на cancelled
+import (
+	"testing"
+	"time"
+)
+
+var oldUpdatedAt time.Time = time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
+
+func TestTaskStart_ActiveTask(t *testing.T) {
+	task := Task{
+		Status:    TaskStatusActive,
+		UpdatedAt: oldUpdatedAt,
+	}
+
+	task.Start()
+
+	if task.Status != TaskStatusInProgress {
+		t.Fatalf("expected status %q, got %q", TaskStatusInProgress, task.Status)
+	}
+	if task.UpdatedAt.Equal(oldUpdatedAt) {
+		t.Fatal("expected update at to be change")
+	}
+}
+
+func TestTaskStart_NonActiveTask(t *testing.T) {
+	tests := []struct {
+		name   string
+		status TaskStatus
+	}{
+		{
+			name:   "in progress task stays in progress",
+			status: TaskStatusInProgress,
+		},
+		{
+			name:   "completed task stays completed",
+			status: TaskStatusCompleted,
+		},
+		{
+			name:   "cancelled task stays cancelled",
+			status: TaskStatusCancelled,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := Task{
+				Status:    tt.status,
+				UpdatedAt: oldUpdatedAt,
+			}
+
+			task.Start()
+
+			if task.Status != tt.status {
+				t.Fatalf("expected status %q, got %q", tt.status, task.Status)
+			}
+			if !task.UpdatedAt.Equal(oldUpdatedAt) {
+				t.Fatal("expected update at not to be change")
+			}
+		})
+	}
+}
+
+func TestTaskCancel(t *testing.T) {
+	tests := []struct {
+		name   string
+		status TaskStatus
+	}{
+		{
+			name:   "active -> cancelled",
+			status: TaskStatusActive,
+		},
+		{
+			name:   "in progress -> cancelled",
+			status: TaskStatusInProgress,
+		},
+		{
+			name:   "complete -> cancelled",
+			status: TaskStatusCompleted,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := Task{
+				Status:    tt.status,
+				UpdatedAt: oldUpdatedAt,
+			}
+
+			task.Cancel()
+
+			if task.Status != TaskStatusCancelled {
+				t.Fatalf("expected status %q, got %q", TaskStatusCancelled, task.Status)
+			}
+			if task.UpdatedAt.Equal(oldUpdatedAt) {
+				t.Fatalf("expected updated at to change")
+			}
+		})
+	}
+}
+
+func TestTaskComplete(t *testing.T) {
+	tests := []struct {
+		name   string
+		status TaskStatus
+	}{
+		{
+			name:   "active -> completed",
+			status: TaskStatusActive,
+		},
+		{
+			name:   "in progress -> completed",
+			status: TaskStatusInProgress,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := Task{
+				Status:    tt.status,
+				UpdatedAt: oldUpdatedAt,
+			}
+
+			task.Complete()
+
+			if task.Status != TaskStatusCompleted {
+				t.Fatalf("expected status %q, got %q", TaskStatusCompleted, task.Status)
+			}
+			if task.UpdatedAt.Equal(oldUpdatedAt) {
+				t.Fatalf("expected updated at to change")
+			}
+			if task.CompletedAt == nil {
+				t.Fatal("expected completed at to be set")
+			}
+		})
+	}
+}
