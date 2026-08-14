@@ -55,3 +55,15 @@ htmlcov/
 
 # Alembic
 alembic/versions/*.pyc
+
+# Go backend local docs/tasks
+go-backend/.gitignore
+go-backend/README.md
+go-backend/TASK_*.md
+go-backend/ROADMAP_*.md
+
+# Go artifacts
+go-backend/.gocache/
+go-backend/*.exe
+go-backend/*.test
+go-backend/coverage.out
