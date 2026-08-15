@@ -3,11 +3,16 @@ package httpapi
 import (
 	"net/http"
 	"net/http/httptest"
+	"taskoria-go/internal/service"
+	"taskoria-go/internal/storage/memory"
 	"testing"
 )
 
 func TestRouter(t *testing.T) {
-	router := NewRouter()
+	repo := memory.NewTaskRepository()
+	taskService := service.NewTaskService(repo)
+	taskHandler := NewTaskHandler(taskService)
+	router := NewRouter(taskHandler)
 
 	tests := []struct {
 		name       string

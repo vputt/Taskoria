@@ -1,17 +1,14 @@
 package httpapi
 
 import (
+	"errors"
 	"net/http"
-	"taskoria-go/internal/domain"
+	"strconv"
+
 	"taskoria-go/internal/service"
 )
 
-// Цель этого файла:
-// - принять HTTP-запрос;
-// - прочитать JSON/body/path-параметры;
-// - собрать input для service.TaskService;
-// - вызвать нужный метод сервиса;
-// - вернуть JSON-ответ или JSON-ошибку.
+const temporaryUserID int64 = 1
 
 type TaskHandler struct {
 	tasks *service.TaskService
@@ -23,47 +20,113 @@ func NewTaskHandler(tasks *service.TaskService) *TaskHandler {
 	}
 }
 
-func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) (*domain.Task, error) {
+func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	var body createTaskRequest
-	if err := readJSON(r, body); err != nil {
-		writeError(w, http.StatusBadRequest, "error read request")
-		return nil, err
+	if err := readJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
 	}
 
-	userID := int64(1)
-
-	requset := service.CreateTaskInput{
-		Title:       body.Title,
-		Description: body.Description,
-		Category:    body.Category,
-		Priority:    body.Priority,
-		Difficulty:  body.Difficulty,
-		Deadline:    body.Deadline,
+	input := body.toServiceInput()
+	task, err := h.tasks.CreateTask(temporaryUserID, input)
+	if err != nil {
+		writeTaskServiceError(w, err)
+		return
 	}
 
-	if task, err := h.tasks.CreateTask(userID, requset); err != nil {
-		writeError(w, http.StatusBadRequest, "error create task")
-		return nil, err
-	} else {
-		return task, nil
-	}
+	writeJSON(w, http.StatusCreated, newTaskResponse(task))
 }
 
-func (h *TaskHandler) ListTasks()
+func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
+	tasks, err := h.tasks.ListTasks(temporaryUserID)
+	if err != nil {
+		writeTaskServiceError(w, err)
+		return
+	}
 
-//
-// Шаг 4:
-// После CreateTask добавь ListTasks.
-//
-// Endpoint:
-//   GET /tasks
-//
-// Шаг 5:
-// Потом добавь:
-//   GET    /tasks/{id}
-//   PATCH  /tasks/{id}
-//   DELETE /tasks/{id}
-//   POST   /tasks/{id}/complete
-//
-// Для taskID сначала можно использовать strconv.ParseInt.
-// Позже, когда появится auth, userID будет доставаться из request context.
+	response := make([]taskResponse, 0, len(tasks))
+	for i := range tasks {
+		response = append(response, newTaskResponse(&tasks[i]))
+	}
+
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
+	taskID, err := taskIDFromRequest(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid task id")
+		return
+	}
+
+	task, err := h.tasks.GetTask(temporaryUserID, taskID)
+	if err != nil {
+		writeTaskServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, newTaskResponse(task))
+}
+
+func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
+	taskID, err := taskIDFromRequest(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid task id")
+		return
+	}
+
+	var body updateTaskRequest
+	if err := readJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	input := body.toServiceInput()
+	task, err := h.tasks.UpdateTask(temporaryUserID, taskID, input)
+	if err != nil {
+		writeTaskServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, newTaskResponse(task))
+}
+
+func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	taskID, err := taskIDFromRequest(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid task id")
+		return
+	}
+
+	if err := h.tasks.DeleteTask(temporaryUserID, taskID); err != nil {
+		writeTaskServiceError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *TaskHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
+	taskID, err := taskIDFromRequest(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid task id")
+		return
+	}
+
+	task, err := h.tasks.CompleteTask(temporaryUserID, taskID)
+	if err != nil {
+		writeTaskServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, newTaskResponse(task))
+}
+
+func taskIDFromRequest(r *http.Request) (int64, error) {
+	taskID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || taskID <= 0 {
+		return 0, errors.New("invalid task id")
+	}
+
+	return taskID, nil
+}
